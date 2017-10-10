@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        #container {
+            width: 1500px;
+            display: block;
+            margin: 0 auto;
+            height: 800px;
+            background-color: #d7d7d7;
+            box-sizing: border-box;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .canvas {
+            position: absolute;
+            width: 1500px;
+            height: 800px;
+            border: 2px solid #777777;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+<h1>canvas操作</h1>
+<div id="container">
+    <canvas class="canvas" id="canvas"></canvas>
+    <canvas class="canvas" id="canvas2"></canvas>
+</div>
+
+</body>
+</html>
+<script>
+    window.onload = function () {
+        var _height = 800;
+        var _width = 1500;
+
+        var c = document.getElementById('canvas');
+        var c2 = document.getElementById('canvas2');
+        c.height = _height;
+        c2.height = _height;
+        c.width = _width;
+        c2.width = _width;
+        var cxt = c.getContext('2d');
+        var cxt2 = c2.getContext('2d');
+
+        var blueBooms = [];
+        var positions = [];
+        var mSpeedX, mSpeedY;
+        var count = Math.random() * 5 + 2;
+        //var count =1
+        var rX, rY, mX, mY;
+        var rW = 100;
+        var rH = 100;
+        var maxX = c.width - rW;
+        var maxY = c.height - rH;
+        c2.onmousemove = function (e) {
+            mX = window.event.offsetX;
+            mY = window.event.offsetY;
+            positions.push({mX: mX, mY: mY, time: Date.now().valueOf()});
+            if (positions.length >= 12) {
+                positions.shift();
+                mSpeedX = (positions[10].mX - positions[0].mX) / (positions[10].time - positions[0].time);
+                mSpeedY = (positions[10].mY - positions[0].mY) / (positions[10].time - positions[0].time);
+            }
+            rX = mX - rW / 2;
+            rY = mY - rH / 2;
+            if (rX < 0) rX = 0;
+            if (rX > maxX) rX = maxX;
+            if (rY < 0) rY = 0;
+            if (rY > maxY) rY = maxY;
+        };
+
+        for (var i = 0; i < count; i++) {
+            var pp = new reateBlueBoom();
+            blueBooms.push(pp);
+        }
+
+
+        setInterval(function () {
+
+
+            cxt2.clearRect(0, 0, 1500, 800);
+            cxt2.beginPath();
+            var img2 = new Image();
+            img2.src = './红泡.png';
+            cxt2.drawImage(img2, rX, rY, 100, 100);
+            cxt2.closePath();
+            cxt2.fill();
+
+
+            cxt.clearRect(0, 0, 1500, 800);
+            for (var boom in blueBooms) {
+                var x = boom;
+                blueBooms[x].speedX = blueBooms[x].speedX / 1.0001;
+                blueBooms[x].speedY = blueBooms[x].speedY / 1.0001;
+                var top = Math.round(blueBooms[x].y + blueBooms[x].speedY);
+                var left = Math.round(blueBooms[x].x + blueBooms[x].speedX);
+
+                if (top <= _height && top >= -blueBooms[x].height) {
+                    blueBooms[x].y = top;
+                } else if (top < -blueBooms[x].height) {
+                    blueBooms[x].y = _height;
+                } else if (top > _height) {
+                    blueBooms[x].y = -blueBooms[x].height;
+                }
+                if (left <= _width && left >= -blueBooms[x].width) {
+                    blueBooms[x].x = left;
+                } else if (left < -blueBooms[x].width) {
+                    blueBooms[x].x = _width;
+                } else if (left > _width) {
+                    blueBooms[x].x = -blueBooms[x].width;
+                }
+                for (var j = 0; j < count; j++)
+                    if (j !== x) {
+                        if (Math.round(Math.pow(blueBooms[x].x - blueBooms[j].x, 2) +
+                                Math.pow(blueBooms[x].y - blueBooms[j].y, 2)) <=
+                            Math.round(Math.pow(blueBooms[x].height / 2 + blueBooms[j].height / 2, 2))) {
+                            var _speedX = blueBooms[x].speedX;
+                            var _speedY = blueBooms[x].speedY;
+                            blueBooms[x].speedX = blueBooms[j].speedX;
+                            blueBooms[j].speedX = _speedX;
+                            blueBooms[x].speedY = blueBooms[j].speedY;
+                            blueBooms[j].speedY = _speedY;
+                        }
+                    }
+                var bDiam = blueBooms[x].height / 2;
+                var rDiam = rW / 2;
+                var bX = blueBooms[x].x;
+                var bY = blueBooms[x].y;
+                if (Math.round(Math.pow(bX - rX, 2) + Math.pow(bY - rY, 2)) <= Math.round(Math.pow(bDiam + rDiam, 2))) {
+                    var _max = 4;
+                    blueBooms[x].speedX = -(mSpeedX + blueBooms[x].speedX);
+                    blueBooms[x].speedY = -(mSpeedY + blueBooms[x].speedY);
+                    if (blueBooms[x].speedX > _max) blueBooms[x].speedX = _max;
+                    if (blueBooms[x].speedX < -_max) blueBooms[x].speedX = -_max;
+                    if (blueBooms[x].speedY > _max) blueBooms[x].speedY = _max;
+                    if (blueBooms[x].speedY < -_max) blueBooms[x].speedY = -_max;
+                }
+                cxt.beginPath();
+                var img = new Image();
+                img.src = './蓝泡.png';
+                cxt.drawImage(img, blueBooms[x].x, blueBooms[x].y, blueBooms[x].height, blueBooms[x].width);
+                cxt.closePath();
+                cxt.fill();
+            }
+        }, 25);
+
+        function reateBlueBoom() {
+            this.x = Math.round(Math.random() * maxX);
+            this.y = Math.round(Math.random() * maxY);
+            this.speedX = Math.round(Math.random() * 10 - 5);
+            this.speedY = Math.round(Math.random() * 10 - 5);
+            var a = Math.round(Math.random() * 150 + 50);
+            this.height = a;
+            this.width = a;
+        }
+    };
+
+</script>

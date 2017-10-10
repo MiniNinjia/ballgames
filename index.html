@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        #container {
+            width: 1500px;
+            margin: 0 auto;
+            height: 800px;
+            background-color: #d7d7d7;
+            border: 2px solid #777777;
+            box-sizing: border-box;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .blueBooms {
+            position: absolute;
+            border-radius: 100%;
+            pointer-events: none;
+            background-color: #4567ff;
+        }
+
+        #redBooms {
+            width: 100px;
+            height: 100px;
+            position: absolute;
+            border-radius: 100%;
+            pointer-events: none;
+            background-color: red;
+            z-index: 100;
+        }
+
+        .blueBooms img, #redBooms img {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+<h1>DOM直接操作</h1>
+<div id="container">
+    <div id="redBooms">
+        <img src="./红泡.png" alt="">
+    </div>
+</div>
+</body>
+</html>
+<script>
+    window.onload = function () {
+        var container = window.document.getElementById('container');
+        var redBooms = window.document.getElementById('redBooms');
+        var rX, rY, mX, mY;
+        var mSpeedX, mSpeedY;
+        var positions = [];
+        var count = Math.random() * 10 + 5;
+        //var count = 1;
+        var blueBooms = [];
+        var maxX = container.offsetWidth - redBooms.offsetWidth;
+        var maxY = container.offsetHeight - redBooms.offsetHeight;
+
+        container.onmousemove = function (e) {
+            mX = e.offsetX;
+            mY = e.offsetY;
+            positions.push({mX: mX, mY: mY, time: Date.now().valueOf()});
+            if (positions.length >= 3) {
+                positions.shift();
+                mSpeedX = (positions[1].mX - positions[0].mX) / (positions[1].time - positions[0].time);
+                mSpeedY = (positions[1].mY - positions[0].mY) / (positions[1].time - positions[0].time);
+                //console.log(mSpeedX+'----'+mSpeedY)
+            }
+            rX = e.offsetX - redBooms.offsetWidth / 2;
+            rY = e.offsetY - redBooms.offsetHeight / 2;
+            if (rX < 0) rX = 0;
+            if (rX > maxX) rX = maxX;
+            if (rY < 0) rY = 0;
+            if (rY > maxY) rY = maxY;
+            redBooms.style.left = rX + 'px';
+            redBooms.style.top = rY + 'px';
+        };
+        loadBlueBooms();
+
+
+        function loadBlueBooms() {//新建随机数目的蓝色球
+            for (var i = 0; i < count; i++) {
+                var blueBoom = document.createElement('div');
+                blueBoom.innerHTML = '<img src="./蓝泡.png" alt="">';
+                blueBoom.style.left = Math.random() * maxX + 'px';
+                blueBoom.style.top = Math.random() * maxY + 'px';
+                blueBoom.speedX = Math.random() * 10 - 5;
+                blueBoom.speedY = Math.random() * 10 - 5;
+                var a = Math.random() * 150 + 50;
+                blueBoom.style.height = a + 'px';
+                blueBoom.style.width = a + 'px';
+                blueBoom.className = 'blueBooms';
+                container.appendChild(blueBoom);
+                blueBooms.push(blueBoom);
+                startMove(blueBoom);
+            }
+        }
+
+        function startMove(blueBoom) {//开始移动小球
+            setInterval(function () {
+                crash(blueBoom);
+                var top = blueBoom.offsetTop + blueBoom.speedY;
+                var left = blueBoom.offsetLeft + blueBoom.speedX;
+
+                if (top <= container.offsetHeight && top >= -blueBoom.offsetHeight) {
+                    blueBoom.style.top = top + 'px';
+                } else if (top < -blueBoom.offsetHeight) {
+                    blueBoom.style.top = container.offsetHeight + 'px';
+                } else if (top > container.offsetHeight) {
+                    blueBoom.style.top = -blueBoom.offsetHeight + 'px';
+                }
+
+                if (left <= container.offsetWidth && left >= -blueBoom.offsetWidth) {
+                    blueBoom.style.left = left + 'px'
+                } else if (left < -blueBoom.offsetWidth) {
+                    blueBoom.style.left = container.offsetWidth + 'px';
+                } else if (left > container.offsetWidth) {
+                    blueBoom.style.left = -blueBoom.offsetWidth + 'px'
+                }
+                crash(blueBoom);
+            }, 20)
+        }
+
+        function crash(blueBoom) {
+            var bDiam = blueBoom.offsetHeight / 2;
+            var rDiam = redBooms.offsetHeight / 2;
+            var bX = blueBoom.offsetLeft + bDiam;
+            var bY = blueBoom.offsetTop + bDiam;
+            if (Math.sqrt(Math.pow(bX - rX, 2) + Math.pow(bY - rY, 2)) < bDiam + rDiam) {
+                //console.log(blueBoom.speedX + '----' + blueBoom.speedY)
+                blueBoom.speedX = -(mSpeedX + blueBoom.speedX);
+                blueBoom.speedY = -(mSpeedY + blueBoom.speedY);
+                var max = 4;
+                if (blueBoom.speedX > max) blueBoom.speedX = max;
+                if (blueBoom.speedX < -max) blueBoom.speedX = -max;
+                if (blueBoom.speedY < -max) blueBoom.speedY = -max;
+                if (blueBoom.speedY > max) blueBoom.speedY = max;
+            }
+        }
+    }
+</script>
